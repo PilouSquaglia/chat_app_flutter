@@ -14,6 +14,22 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   TextEditingController messageController = TextEditingController();
+  List<Widget> messageWidgets = [];
+  bool _isMounted = false;
+
+  @override
+  void dispose() {
+    _isMounted = false;
+    super.dispose();
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _isMounted = true;
+    loadMessages();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +43,10 @@ class _ChatPageState extends State<ChatPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('messages')
-                  .where('from', whereIn: [
-                FirebaseAuth.instance.currentUser?.uid,
-                widget.userId,
-              ])
-                  .snapshots(),
+              .where('from', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+              .where('to', isEqualTo: widget.userId)
+              // .orderBy('timestamp', descending: true)
+              .snapshots(),
               builder: (context, snapshot) {
                 try {
                   if (!snapshot.hasData) {
@@ -40,16 +55,16 @@ class _ChatPageState extends State<ChatPage> {
                     );
                   }
 
-                  var messages = snapshot.data!.docs;
+                  // List<Widget> messageWidgets = [];
+                  // for (var message in messages) {
+                  //   var messageText = message['content'];
+                  //   var messageSender = message['from'];
+                  //
+                  //   var messageWidget = MessageWidget(messageSender, messageText);
+                  //   messageWidgets.add(messageWidget);
+                  // }
 
-                  List<Widget> messageWidgets = [];
-                  for (var message in messages) {
-                    var messageText = message['content'];
-                    var messageSender = message['from'];
-
-                    var messageWidget = MessageWidget(messageSender, messageText);
-                    messageWidgets.add(messageWidget);
-                  }
+                  loadMessages();
 
                   return ListView(
                     reverse: true,
@@ -102,6 +117,43 @@ class _ChatPageState extends State<ChatPage> {
       messageController.clear();
     }
   }
+
+  Future<void> loadMessages() async {
+    var messages = await FirebaseFirestore.instance
+        .collection('messages')
+        .where('from', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+        .where('to', isEqualTo: widget.userId)
+        .get();
+
+    for (var message in messages.docs) {
+      var messageText = message['content'];
+
+      var displayName = await getCurrentUserName();
+
+      if (_isMounted) {
+        var messageWidget = MessageWidget(displayName ?? 'Unknown User', messageText);
+        setState(() {
+          messageWidgets.add(messageWidget);
+        });
+      }
+    }
+  }
+
+  Future<String?> getCurrentUserName() async {
+
+    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('id', isEqualTo: userId)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      return querySnapshot.docs.first['displayName'];
+    } else {
+      return null;
+    }
+  }
+
 }
 
 class MessageWidget extends StatelessWidget {
