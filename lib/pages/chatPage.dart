@@ -42,7 +42,6 @@ class _ChatPageState extends State<ChatPage> {
 
                   var messagesSent = snapshot.data!.docs;
 
-                  // Charger les messages reçus
                   return StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('messages')
@@ -56,14 +55,24 @@ class _ChatPageState extends State<ChatPage> {
                           child: CircularProgressIndicator(),
                         );
                       }
-
                       var messagesReceived = snapshotReceived.data!.docs;
-
-                      // Combiner les messages envoyés et reçus dans une seule liste
                       var allMessages = [...messagesSent, ...messagesReceived];
 
-                      // Trier la liste combinée par timestamp
-                      allMessages.sort((a, b) => (b['timestamp'] as Timestamp).compareTo(a['timestamp'] as Timestamp));
+                      allMessages.sort((a, b) {
+                        var timestampA = a['timestamp'] as Timestamp?;
+                        var timestampB = b['timestamp'] as Timestamp?;
+
+                        if (timestampA == null && timestampB == null) {
+                          return 0;
+                        } else if (timestampA == null) {
+                          return 1;
+                        } else if (timestampB == null) {
+                          return -1;
+                        } else {
+                          return timestampB.compareTo(timestampA);
+                        }
+                      });
+
 
                       return ListView.builder(
                         reverse: true,
@@ -124,28 +133,6 @@ class _ChatPageState extends State<ChatPage> {
       messageController.clear();
     }
   }
-
-  // Future<void> loadMessages() async {
-  //   var messages = await FirebaseFirestore.instance
-  //       .collection('messages')
-  //       .where('from', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-  //       .where('to', isEqualTo: widget.userId)
-  //       .get();
-  //
-  //   for (var message in messages.docs) {
-  //     var messageText = message['content'];
-  //
-  //     var displayName = await getCurrentUserName();
-  //     print(displayName);
-  //
-  //     if (_isMounted) {
-  //       var messageWidget = MessageWidget(displayName ?? 'Unknown User', messageText);
-  //       setState(() {
-  //         messageWidgets.add(messageWidget);
-  //       });
-  //     }
-  //   }
-  // }
 
   Future<String?> getCurrentUserName() async {
 
