@@ -5,21 +5,21 @@ import 'package:superchat/constants.dart';
 import 'package:superchat/pages/sign_in_page.dart';
 import 'package:superchat/widgets/stream_listener.dart';
 
-import 'chatPage.dart';
+import '../Bloc/Message/chat_page.dart';
+import 'chat_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key});
 
   Future<String> getUserData(String userId) async {
     try {
-      final DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+      final QuerySnapshot userSnapshot = await FirebaseFirestore.instance
           .collection('users')
-          .doc(userId)
+          .where('id', isEqualTo: userId)
           .get();
 
-      if (userSnapshot.exists) {
-        final Map<String, dynamic> userData = userSnapshot.data() as Map<String, dynamic>;
-        final String userName = userData['displayName'] ?? '';
+      if (userSnapshot.docs.first['displayName'].exists) {
+        final String userName = userSnapshot.docs.first['displayName'];
         return 'Name: $userName';
       } else {
         return 'User not found';
@@ -68,9 +68,16 @@ class HomePage extends StatelessWidget {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.active) {
                       final User? user = snapshot.data;
-
                       if (user != null) {
-                        return Text('User ID: ${user.uid} Mail: ${user.email}');
+                        var userName = getUserData(user.uid);
+                        // print(userName.toString());
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('User ID: ${user.uid}'),
+                            Text('Name: ${userName}'),
+                          ],
+                        );
                       } else {
                         return Text('User not logged in');
                       }
@@ -98,7 +105,8 @@ class HomePage extends StatelessWidget {
 
                         if (data != null) {
                           final String userId = data['id'] ?? '';
-                          final Future<String> userDetails = getUserData(userId);
+                          // print(userId);
+                          final String userName = data['displayName'];
 
                           return InkWell(
                             onTap: () {
@@ -106,26 +114,14 @@ class HomePage extends StatelessWidget {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => ChatPage(
-                                    // Pass relevant user information to ChatPage
                                     userId: userId,
-                                    userName: data['displayName'] ?? '',
+                                    userName: userName,
                                   ),
                                 ),
                               );
                             },
-                            child: FutureBuilder<String>(
-                              future: userDetails,
-                              builder: (context, userDetailsSnapshot) {
-                                if (userDetailsSnapshot.connectionState == ConnectionState.done) {
-                                  return ListTile(
-                                    title: Text('User ID: $userId, User Details: ${userDetailsSnapshot.data}'),
-                                  );
-                                } else {
-                                  return ListTile(
-                                    title: Text('Chargement des details des utilisateurs...'),
-                                  );
-                                }
-                              },
+                            child: ListTile(
+                              title: Text('Chatter avec : $userName'),
                             ),
                           );
                         } else {
