@@ -17,13 +17,13 @@ class ChatApp extends StatelessWidget {
         useMaterial3: true,
         primarySwatch: Colors.blue,
         colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.deepPurple,
+          primarySwatch: Colors.blue,
           backgroundColor: Colors.white,
           accentColor: Colors.blueGrey,
           brightness: Brightness.light,
         ),
       ),
-      home: isLoggedIn ? const HomePage() : const SignInPage(),
+      home: isLoggedIn ? HomePage() : const SignInPage(),
     );
   }
 }

@@ -142,7 +142,7 @@ class _SignInPageState extends State<SignInPage> {
 
         if (credential.user != null) {
           navigator.pushReplacement(
-              MaterialPageRoute(builder: (_) => const HomePage()));
+              MaterialPageRoute(builder: (_) => HomePage()));
         }
       } on FirebaseAuthException catch (e, stackTrace) {
         final String errorMessage = _getSignInErrorMessage(e);

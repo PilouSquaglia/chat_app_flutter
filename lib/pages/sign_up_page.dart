@@ -158,7 +158,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
           scaffoldMessenger.showSnackBar(SnackBar(content: Text('Inscription réussie')));
 
-          navigator.pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
+          navigator.pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
         }
       } on FirebaseAuthException catch (e, stackTrace) {
         final String errorMessage;

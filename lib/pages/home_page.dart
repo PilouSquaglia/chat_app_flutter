@@ -6,34 +6,34 @@ import 'package:superchat/pages/sign_in_page.dart';
 import 'package:superchat/widgets/stream_listener.dart';
 
 import '../Bloc/Message/chat_page.dart';
-import 'chat_page.dart';
+import '../Bloc/User/user_page.dart';
+import '../Bloc/User/user_repository.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key});
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
-  Future<String> getUserData(String userId) async {
-    try {
-      final QuerySnapshot userSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('id', isEqualTo: userId)
-          .get();
+  @override
+  _HomePageState createState() => _HomePageState();
+}
 
-      if (userSnapshot.docs.first['displayName'].exists) {
-        final String userName = userSnapshot.docs.first['displayName'];
-        return 'Name: $userName';
-      } else {
-        return 'User not found';
-      }
-    } catch (e) {
-      print('Error getting user data: $e');
-      return 'Error getting user data';
-    }
+class _HomePageState extends State<HomePage> {
+  final UserRepository userRepository = UserRepository();
+  late String userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final userData = await userRepository.getUserData(userId).first;
+          userName = userData['displayName'] ?? '';
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return StreamListener<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       listener: (user) {
@@ -47,8 +47,18 @@ class HomePage extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text(kAppTitle),
-          backgroundColor: theme.colorScheme.primary,
+          backgroundColor: Colors.blue,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => UserPage(),
+                  ),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () {
@@ -61,7 +71,7 @@ class HomePage extends StatelessWidget {
           children: [
             Container(
               color: Colors.blue,
-              height: 250,
+              height: 50,
               child: Center(
                 child: StreamBuilder<User?>(
                   stream: FirebaseAuth.instance.authStateChanges(),
@@ -69,20 +79,18 @@ class HomePage extends StatelessWidget {
                     if (snapshot.connectionState == ConnectionState.active) {
                       final User? user = snapshot.data;
                       if (user != null) {
-                        var userName = getUserData(user.uid);
-                        // print(userName.toString());
+                        print(userName);
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('User ID: ${user.uid}'),
-                            Text('Name: ${userName}'),
+                            Text('Bienvenue, ${userName}'),
                           ],
                         );
                       } else {
-                        return Text('User not logged in');
+                        return const Text('User not logged in');
                       }
                     } else {
-                      return CircularProgressIndicator();
+                      return const CircularProgressIndicator();
                     }
                   },
                 ),
@@ -105,12 +113,10 @@ class HomePage extends StatelessWidget {
 
                         if (data != null) {
                           final String userId = data['id'] ?? '';
-                          // print(userId);
                           final String userName = data['displayName'];
 
                           return InkWell(
                             onTap: () {
-                              // Navigate to the ChatPage with the selected user
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => ChatPage(
@@ -126,13 +132,13 @@ class HomePage extends StatelessWidget {
                           );
                         } else {
                           return ListTile(
-                            title: Text('Error retrieving user data'),
+                            title: const Text('Error retrieving user data'),
                           );
                         }
                       },
                     );
                   } else {
-                    return CircularProgressIndicator();
+                    return const CircularProgressIndicator();
                   }
                 },
               ),

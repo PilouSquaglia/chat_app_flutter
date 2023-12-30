@@ -68,9 +68,6 @@ class _ChatPageState extends State<ChatPage> {
                     var messageText = (allMessages[index] as Map<String, dynamic>)['content'];
                     var messageSender = (allMessages[index] as Map<String, dynamic>)['from'];
 
-                    print(allMessages);
-                    // var displayName = await getDisplayName(messageSender);
-
                     return MessageWidget(messageSender, messageText);
                   },
                 );
