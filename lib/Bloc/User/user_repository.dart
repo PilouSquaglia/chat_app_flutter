@@ -28,18 +28,14 @@ class UserRepository {
   }) async {
     try {
       print(userId);
-      // Mise à jour des données de l'utilisateur authentifié
       await _auth.currentUser?.updateDisplayName(displayName);
 
-      // Mise à jour des données dans la collection 'users'
       QuerySnapshot userSnapshot = await _firestore
           .collection('users')
           .where('id', isEqualTo: userId)
           .get();
 
       if (userSnapshot.docs.isNotEmpty) {
-        // Si des documents correspondent à la condition where
-        // Mettez à jour chaque document
         for (var doc in userSnapshot.docs) {
           await doc.reference.update({
             'displayName': displayName,

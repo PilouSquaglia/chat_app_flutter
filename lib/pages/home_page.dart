@@ -28,8 +28,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadUserData() async {
     String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-      final userData = await userRepository.getUserData(userId).first;
-          userName = userData['displayName'] ?? '';
+    final userData = await userRepository.getUserData(userId).first;
+    setState(() {
+      userName = userData['displayName'] ?? '';
+    });
   }
 
   @override
@@ -79,11 +81,10 @@ class _HomePageState extends State<HomePage> {
                     if (snapshot.connectionState == ConnectionState.active) {
                       final User? user = snapshot.data;
                       if (user != null) {
-                        print(userName);
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('Bienvenue, ${userName}'),
+                            Text('Bienvenue, $userName'),
                           ],
                         );
                       } else {
@@ -96,10 +97,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            const Spacer(flex: 1),
-            Container(
-              color: Colors.blue,
-              height: 500,
+            Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance.collection('users').snapshots(),
                 builder: (context, snapshot) {
@@ -115,19 +113,26 @@ class _HomePageState extends State<HomePage> {
                           final String userId = data['id'] ?? '';
                           final String userName = data['displayName'];
 
-                          return InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => ChatPage(
-                                    userId: userId,
-                                    userName: userName,
-                                  ),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                            child: Card(
+                              elevation: 2.0,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatPage(
+                                        userId: userId,
+                                        userName: userName,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: ListTile(
+                                  title: Text('Chatter avec : $userName'),
+                                  leading: Icon(Icons.person),
                                 ),
-                              );
-                            },
-                            child: ListTile(
-                              title: Text('Chatter avec : $userName'),
+                              ),
                             ),
                           );
                         } else {
@@ -138,12 +143,13 @@ class _HomePageState extends State<HomePage> {
                       },
                     );
                   } else {
-                    return const CircularProgressIndicator();
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
                   }
                 },
               ),
             ),
-            const Spacer(flex: 1),
           ],
         ),
       ),

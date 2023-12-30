@@ -34,10 +34,7 @@ class UserBloc {
     required String displayName,
     required String bio,
   }) {
-    // Mettez à jour l'état avec les données fournies
     _userController.add(UserState(displayName: displayName, bio: bio));
-
-    // Mettez également à jour les données dans le repository si nécessaire
     _userRepository.updateProfile(userId: id, displayName: displayName, bio: bio);
   }
 
